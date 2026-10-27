@@ -10,7 +10,7 @@ El código se escribió con ayuda de herramientas de IA. Yo definí qué tenía 
 
 > 🇺🇸 *Personal project: a multi-business booking web app (PWA) for barbershops, salons, restaurants and clinics. Customers book without an account; owners manage appointments from their phone. Next.js + Supabase, deployed on Vercel. The database itself prevents double bookings. Built with AI assistance; I defined the product rules and tested it.*
 
-**Pruébalo:** https://AGENDA_URL · [reservar como cliente](https://AGENDA_URL/b/barberia-demo) · [ver el panel del dueño (ejemplo)](https://AGENDA_URL/demo)
+**Pruébalo:** https://agenda-citas-eight.vercel.app · [reservar como cliente](https://agenda-citas-eight.vercel.app/b/barberia-demo) · [ver el panel del dueño (ejemplo)](https://agenda-citas-eight.vercel.app/demo)
 
 ## Capturas
 

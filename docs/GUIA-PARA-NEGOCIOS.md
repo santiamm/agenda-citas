@@ -7,7 +7,7 @@ Para mandarle a un dueño de negocio (por ejemplo, por WhatsApp). Toma unos 5 mi
 ¡Hola! Te comparto la app para que tus clientes reserven solos. Es gratis y no hay que descargar nada de la tienda.
 
 **1. Crea tu cuenta**
-Entra a 👉 https://AGENDA_URL/entrar?modo=registro
+Entra a 👉 https://agenda-citas-eight.vercel.app/entrar?modo=registro
 Pon tu correo y una contraseña. Te llega un correo para activar la cuenta: ábrelo y toca el enlace.
 
 **2. Crea tu negocio**
@@ -37,5 +37,5 @@ Abre la app → **Agenda**. Ahí ves la cita y puedes:
 **Para tenerlo en cuenta**
 - La app **no avisa sola** cuando llega una cita nueva: revisa la agenda un par de veces al día.
 - Dos clientes nunca pueden quedar a la misma hora con el mismo barbero.
-- ¿Quieres ver cómo se ve antes de crear la tuya? Prueba como cliente en https://AGENDA_URL/b/barberia-demo y mira el panel de ejemplo en https://AGENDA_URL/demo
+- ¿Quieres ver cómo se ve antes de crear la tuya? Prueba como cliente en https://agenda-citas-eight.vercel.app/b/barberia-demo y mira el panel de ejemplo en https://agenda-citas-eight.vercel.app/demo
 - Cualquier cosa rara o idea, cuéntame. ¡Me sirve mucho!
