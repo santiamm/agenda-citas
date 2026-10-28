@@ -1,25 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AgendaView } from "@/components/agenda-view";
-import { dayRange, formatDateLong, formatTime, todayIn } from "@/lib/format";
-import { getOwnerBusiness } from "@/lib/owner";
-import type { AgendaItem } from "@/lib/types";
+import { dayRange, formatDateLong, formatTime, todayIn, whatsappLink } from "@/lib/format";
+import { APPOINTMENT_SELECT, getOwnerBusiness, toAgendaItems, type AppointmentRow } from "@/lib/owner";
+import type { MembershipRow, WaitlistItem } from "@/lib/types";
 import { ShareLink } from "./share-link";
 
 export const metadata: Metadata = { title: "Agenda" };
-
-type Row = Omit<AgendaItem, "service_name" | "resource_name"> & {
-  services: { name: string } | null;
-  resources: { name: string } | null;
-};
-
-const SELECT = "id, starts_at, ends_at, status, customer_name, customer_phone, notes, services(name), resources(name)";
-
-const toItem = (r: Row): AgendaItem => ({
-  ...r,
-  service_name: r.services?.name ?? "",
-  resource_name: r.resources?.name ?? "",
-});
 
 export default async function AgendaPage({ params, searchParams }: PageProps<"/panel/[slug]">) {
   const { slug } = await params;
@@ -29,26 +16,39 @@ export default async function AgendaPage({ params, searchParams }: PageProps<"/p
   const date = typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : todayIn(tz);
   const [from, to] = dayRange(date, tz);
 
-  const [day, pending] = await Promise.all([
+  const [day, pending, memberships, planServices, waitlist] = await Promise.all([
     supabase
       .from("appointments")
-      .select(SELECT)
+      .select(APPOINTMENT_SELECT)
       .eq("business_id", business.id)
       .gte("starts_at", from)
       .lt("starts_at", to)
       .order("starts_at")
-      .returns<Row[]>(),
+      .returns<AppointmentRow[]>(),
     supabase
       .from("appointments")
-      .select(SELECT)
+      .select(APPOINTMENT_SELECT)
       .eq("business_id", business.id)
       .eq("status", "pending")
       .gte("starts_at", new Date().toISOString())
       .order("starts_at")
       .limit(10)
-      .returns<Row[]>(),
+      .returns<AppointmentRow[]>(),
+    supabase.rpc("membership_overview", { p_business_id: business.id }),
+    supabase.from("plan_services").select("plan_id, service_id").eq("business_id", business.id),
+    supabase
+      .from("waitlist")
+      .select("*, services(name)")
+      .eq("business_id", business.id)
+      .eq("desired_date", date)
+      .eq("status", "waiting")
+      .order("created_at")
+      .returns<WaitlistItem[]>(),
   ]);
-  const otherPending = (pending.data ?? []).map(toItem).filter((p) => p.starts_at < from || p.starts_at >= to);
+  const members = (memberships.data ?? []) as MembershipRow[];
+  const ps = planServices.data ?? [];
+  const otherPending = toAgendaItems(pending.data ?? []).filter((p) => p.starts_at < from || p.starts_at >= to);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://agenda-citas-eight.vercel.app";
 
   return (
     <div className="space-y-6">
@@ -57,7 +57,8 @@ export default async function AgendaPage({ params, searchParams }: PageProps<"/p
           <p className="font-semibold">¡Tu negocio está listo! 🎉</p>
           <p className="mt-1 text-sm">
             Revisa tus <Link href={`/panel/${slug}/servicios`} className="underline">servicios</Link> y tu{" "}
-            <Link href={`/panel/${slug}/horario`} className="underline">horario</Link>, y comparte tu enlace.
+            <Link href={`/panel/${slug}/horario`} className="underline">horario</Link>, activa los{" "}
+            <Link href={`/panel/${slug}/ajustes`} className="underline">avisos</Link> y comparte tu enlace.
           </p>
           <div className="mt-3">
             <ShareLink slug={slug} name={business.name} />
@@ -88,13 +89,41 @@ export default async function AgendaPage({ params, searchParams }: PageProps<"/p
       )}
 
       <AgendaView
-        items={(day.data ?? []).map(toItem)}
+        items={toAgendaItems(day.data ?? [], members, ps)}
         date={date}
         tz={tz}
         basePath={`/panel/${slug}`}
         slug={slug}
         businessName={business.name}
+        appUrl={appUrl}
       />
+
+      {(waitlist.data ?? []).length > 0 && (
+        <section className="card p-4">
+          <h2 className="font-semibold">Lista de espera para este día</h2>
+          <p className="text-sm text-muted">Si se libera una hora, escríbeles. Gestiona todo en Más → Lista de espera.</p>
+          <ul className="mt-3 space-y-2">
+            {(waitlist.data ?? []).map((w) => (
+              <li key={w.id} className="flex items-center justify-between gap-2 text-sm">
+                <span>
+                  <span className="font-medium">{w.customer_name}</span> · {w.services?.name}
+                </span>
+                <a
+                  className="btn-ghost min-h-9 px-3 text-sm"
+                  target="_blank"
+                  rel="noreferrer"
+                  href={whatsappLink(
+                    w.customer_phone,
+                    `Hola ${w.customer_name.split(" ")[0]}, se liberó una hora en ${business.name} para ${w.services?.name}. Resérvala aquí: ${appUrl}/b/${slug}`,
+                  )}
+                >
+                  WhatsApp
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

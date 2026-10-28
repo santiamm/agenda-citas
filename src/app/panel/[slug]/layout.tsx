@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getOwnerBusiness } from "@/lib/owner";
+import { LiveUpdates } from "./live-updates";
 import { PanelNav } from "./panel-nav";
 
 export default async function BusinessPanelLayout({ children, params }: LayoutProps<"/panel/[slug]">) {
@@ -7,7 +8,7 @@ export default async function BusinessPanelLayout({ children, params }: LayoutPr
   const { business } = await getOwnerBusiness(slug);
   return (
     <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-10 border-b border-line bg-paper/90 backdrop-blur">
+      <header className="sticky top-0 z-10 print:hidden border-b border-line bg-paper/90 backdrop-blur">
         <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 py-3">
           <Link href="/panel?nuevo=1" className="min-w-0">
             <span className="block truncate font-semibold">{business.name}</span>
@@ -18,6 +19,7 @@ export default async function BusinessPanelLayout({ children, params }: LayoutPr
         </div>
       </header>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-4 pb-28">{children}</main>
+      <LiveUpdates businessId={business.id} />
       <PanelNav slug={slug} />
     </div>
   );

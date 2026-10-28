@@ -21,6 +21,9 @@ La app te deja servicios y un horario de ejemplo. Cámbialos a tu gusto en:
 - **Android:** en Chrome, menú ⋮ → *Agregar a la pantalla principal*.
 - **iPhone:** en **Safari**, botón Compartir → *Agregar a inicio*.
 
+**3b. Activa los avisos** 🔔
+Abre la app instalada → **Más → Ajustes y avisos** → **Activar avisos en este celular**. Así te llega una notificación cada vez que alguien reserva o cancela.
+
 **4. Comparte tu enlace**
 En **Ajustes** está tu enlace (ej. `…/b/barberia-esparza`). Ponlo en tu estado de WhatsApp, en la bio de Instagram o mándalo a tus clientes.
 
@@ -35,7 +38,10 @@ Abre la app → **Agenda**. Ahí ves la cita y puedes:
 ---
 
 **Para tenerlo en cuenta**
-- La app **no avisa sola** cuando llega una cita nueva: revisa la agenda un par de veces al día.
+- **Recordar:** en la agenda, el botón 🔔 *Recordar* abre WhatsApp con el recordatorio listo para el cliente.
+- **Mensualidades:** en **Más → Mensualidades** creas tu plan (ej. 4 cortes al mes), inscribes al cliente y registras cada pago. La app te dice quién está vencido.
+- **Clientes:** en **Clientes** ves el historial de cada uno (visitas, si ha faltado, notas).
+- Si alguien llama o llega sin reserva, anótalo con **+ Cita** en la agenda.
 - Dos clientes nunca pueden quedar a la misma hora con el mismo barbero.
 - ¿Quieres ver cómo se ve antes de crear la tuya? Prueba como cliente en https://agenda-citas-eight.vercel.app/b/barberia-demo y mira el panel de ejemplo en https://agenda-citas-eight.vercel.app/demo
 - Cualquier cosa rara o idea, cuéntame. ¡Me sirve mucho!

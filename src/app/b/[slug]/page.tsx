@@ -46,7 +46,7 @@ export default async function BusinessPage({ params }: PageProps<"/b/[slug]">) {
   const { slug } = await params;
   const data = await getPublicBusiness(slug);
   if (!data) notFound();
-  const { business, services, resources, hours } = data;
+  const { business, services, resources, hours, resourceServices } = data;
   const schedule = summarizeHours(hours);
 
   return (
@@ -83,6 +83,7 @@ export default async function BusinessPage({ params }: PageProps<"/b/[slug]">) {
           }}
           services={services}
           resources={resources}
+          resourceServices={resourceServices}
           openWeekdays={[...new Set(hours.map((h) => h.weekday))]}
         />
       )}

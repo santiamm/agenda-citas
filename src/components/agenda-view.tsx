@@ -11,6 +11,7 @@ type Props = {
   slug: string;
   businessName: string;
   readOnly?: boolean;
+  appUrl?: string;
 };
 
 const STATUS_STYLE: Record<AppointmentStatus, string> = {
@@ -21,7 +22,7 @@ const STATUS_STYLE: Record<AppointmentStatus, string> = {
   no_show: "bg-red-50 text-red-700",
 };
 
-export function AgendaView({ items, date, tz, basePath, slug, businessName, readOnly }: Props) {
+export function AgendaView({ items, date, tz, basePath, slug, businessName, readOnly, appUrl = "" }: Props) {
   const today = todayIn(tz);
   const active = items.filter((i) => i.status !== "cancelled");
   const pending = items.filter((i) => i.status === "pending").length;
@@ -38,11 +39,18 @@ export function AgendaView({ items, date, tz, basePath, slug, businessName, read
               : `${active.length} ${active.length === 1 ? "cita" : "citas"}${pending ? ` · ${pending} por confirmar` : ""}`}
           </p>
         </div>
-        {date !== today && (
-          <Link href={`${basePath}?d=${today}`} className="btn-ghost text-sm">
-            Hoy
-          </Link>
-        )}
+        <div className="flex shrink-0 gap-2">
+          {date !== today && (
+            <Link href={`${basePath}?d=${today}`} className="btn-ghost text-sm">
+              Hoy
+            </Link>
+          )}
+          {!readOnly && (
+            <Link href={`/panel/${slug}/nueva?d=${date}`} className="btn-primary text-sm">
+              + Cita
+            </Link>
+          )}
+        </div>
       </div>
 
       <nav className="-mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 pb-1" aria-label="Cambiar de día">
@@ -86,64 +94,95 @@ export function AgendaView({ items, date, tz, basePath, slug, businessName, read
             )}
           </li>
         )}
-        {items.map((a) => (
-          <li key={a.id} className={`card p-4 ${a.status === "cancelled" ? "opacity-60" : ""}`}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-lg font-semibold tabular-nums">
-                  {formatTime(a.starts_at, tz)}
-                  <span className="text-sm font-normal text-muted"> – {formatTime(a.ends_at, tz)}</span>
-                </p>
-                <p className="truncate font-medium">{a.customer_name}</p>
-                <p className="text-sm text-muted">
-                  {a.service_name} · {a.resource_name}
-                </p>
-                {a.notes && <p className="mt-1 text-sm italic text-ink/80">“{a.notes}”</p>}
+        {items.map((a) => {
+          const future = new Date(a.starts_at) > new Date();
+          const first = a.customer_name.split(" ")[0];
+          const when = `${formatDateLong(a.starts_at, tz).toLowerCase()} a las ${formatTime(a.starts_at, tz)}`;
+          return (
+            <li key={a.id} className={`card p-4 ${a.status === "cancelled" ? "opacity-60" : ""}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-lg font-semibold tabular-nums">
+                    {formatTime(a.starts_at, tz)}
+                    <span className="text-sm font-normal text-muted"> – {formatTime(a.ends_at, tz)}</span>
+                  </p>
+                  {a.customer_id && !readOnly ? (
+                    <Link href={`/panel/${slug}/clientes/${a.customer_id}`} className="block truncate font-medium underline-offset-4 hover:underline">
+                      {a.customer_name}
+                    </Link>
+                  ) : (
+                    <p className="truncate font-medium">{a.customer_name}</p>
+                  )}
+                  <p className="text-sm text-muted">
+                    {a.service_name} · {a.resource_name}
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {a.member && <Tag className="bg-violet-100 text-violet-800">Mensualidad</Tag>}
+                    {a.source === "bot" && <Tag className="bg-sky-100 text-sky-800">Por WhatsApp</Tag>}
+                    {a.source === "owner" && <Tag className="bg-stone-100 text-stone-700">Anotada por ti</Tag>}
+                  </div>
+                  {a.notes && <p className="mt-1 text-sm italic text-ink/80">“{a.notes}”</p>}
+                </div>
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLE[a.status]}`}>
+                  {STATUS_LABEL[a.status]}
+                </span>
               </div>
-              <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLE[a.status]}`}>
-                {STATUS_LABEL[a.status]}
-              </span>
-            </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {readOnly ? (
-                <span className="text-xs text-muted">Panel de ejemplo: los botones están desactivados.</span>
-              ) : (
-                <>
-                  {a.status === "pending" && <StatusButton a={a} slug={slug} date={date} to="confirmed" label="Confirmar" primary />}
-                  {(a.status === "pending" || a.status === "confirmed") && (
-                    <StatusButton a={a} slug={slug} date={date} to="cancelled" label="Cancelar" />
-                  )}
-                  {a.status === "confirmed" && new Date(a.starts_at) <= new Date() && (
-                    <>
-                      <StatusButton a={a} slug={slug} date={date} to="completed" label="Atendida" primary />
-                      <StatusButton a={a} slug={slug} date={date} to="no_show" label="No vino" />
-                    </>
-                  )}
-                  {(a.status === "cancelled" || a.status === "no_show") && new Date(a.starts_at) > new Date() && (
-                    <StatusButton a={a} slug={slug} date={date} to="confirmed" label="Reactivar" />
-                  )}
-                  {a.status !== "cancelled" && (
-                    <a
-                      href={whatsappLink(
-                        a.customer_phone,
-                        `Hola ${a.customer_name.split(" ")[0]}, te escribimos de ${businessName} por tu cita de ${a.service_name} el ${formatDateLong(a.starts_at, tz).toLowerCase()} a las ${formatTime(a.starts_at, tz)}.`,
-                      )}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn-ghost min-h-9 px-3 text-sm"
-                    >
-                      WhatsApp
-                    </a>
-                  )}
-                </>
-              )}
-            </div>
-          </li>
-        ))}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {readOnly ? (
+                  <span className="text-xs text-muted">Panel de ejemplo: los botones están desactivados.</span>
+                ) : (
+                  <>
+                    {a.status === "pending" && <StatusButton a={a} slug={slug} date={date} to="confirmed" label="Confirmar" primary />}
+                    {(a.status === "pending" || a.status === "confirmed") && (
+                      <StatusButton a={a} slug={slug} date={date} to="cancelled" label="Cancelar" />
+                    )}
+                    {a.status === "confirmed" && !future && (
+                      <>
+                        <StatusButton a={a} slug={slug} date={date} to="completed" label="Atendida" primary />
+                        <StatusButton a={a} slug={slug} date={date} to="no_show" label="No vino" />
+                      </>
+                    )}
+                    {(a.status === "cancelled" || a.status === "no_show") && future && (
+                      <StatusButton a={a} slug={slug} date={date} to="confirmed" label="Reactivar" />
+                    )}
+                    {a.customer_phone && (a.status === "pending" || a.status === "confirmed") && future && (
+                      <a
+                        href={whatsappLink(
+                          a.customer_phone,
+                          `Hola ${first} 👋 Te recordamos tu cita en ${businessName}: ${a.service_name}, ${when} con ${a.resource_name}.` +
+                            (a.cancel_token ? ` Si no puedes venir, cancélala aquí: ${appUrl}/cita/${a.cancel_token}` : ""),
+                        )}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-ghost min-h-9 px-3 text-sm"
+                      >
+                        🔔 Recordar
+                      </a>
+                    )}
+                    {a.customer_phone && a.status !== "cancelled" && (
+                      <a
+                        href={whatsappLink(a.customer_phone, `Hola ${first}, te escribimos de ${businessName} por tu cita de ${a.service_name} el ${when}.`)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-ghost min-h-9 px-3 text-sm"
+                      >
+                        WhatsApp
+                      </a>
+                    )}
+                  </>
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
+}
+
+function Tag({ children, className }: { children: React.ReactNode; className: string }) {
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${className}`}>{children}</span>;
 }
 
 function StatusButton({

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { bookAction, joinWaitlistAction } from "@/app/b/[slug]/actions";
 import {
   addDays,
   dayChip,
@@ -19,6 +20,7 @@ type Props = {
   business: { id: string; timezone: string; currency: string; resource_label: string; max_days_ahead: number };
   services: Service[];
   resources: Resource[];
+  resourceServices: { resource_id: string; service_id: string }[];
   openWeekdays: number[];
 };
 
@@ -26,13 +28,18 @@ type Slot = { resource_id: string; resource_name: string; starts_at: string };
 
 const SAVED_KEY = "agenda:cliente";
 
-export function BookingFlow({ business, services, resources, openWeekdays }: Props) {
+export function BookingFlow({ business, services, resources: allResources, resourceServices, openWeekdays }: Props) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const tz = business.timezone;
 
   const [serviceId, setServiceId] = useState<string | null>(services.length === 1 ? services[0].id : null);
   const [resourceId, setResourceId] = useState<string | null>(null); // null = cualquiera
+  // Solo quienes hacen el servicio elegido (si el servicio no tiene asignados, todos).
+  const resources = useMemo(() => {
+    const assigned = resourceServices.filter((rs) => rs.service_id === serviceId).map((rs) => rs.resource_id);
+    return assigned.length ? allResources.filter((r) => assigned.includes(r.id)) : allResources;
+  }, [allResources, resourceServices, serviceId]);
   const days = useMemo(() => {
     const today = todayIn(tz);
     return Array.from({ length: Math.min(business.max_days_ahead, 21) + 1 }, (_, i) => addDays(today, i));
@@ -99,19 +106,19 @@ export function BookingFlow({ business, services, resources, openWeekdays }: Pro
     if (!serviceId || !startsAt) return;
     setSending(true);
     setError(null);
-    const { data, error } = await supabase.rpc("create_booking", {
-      p_business_id: business.id,
-      p_service_id: serviceId,
-      p_starts_at: startsAt,
-      p_customer_name: name,
-      p_customer_phone: phone,
-      p_resource_id: resourceId,
-      p_notes: notes || null,
+    const res = await bookAction({
+      businessId: business.id,
+      serviceId,
+      startsAt,
+      name,
+      phone,
+      resourceId,
+      notes: notes || null,
     });
-    if (error || !data?.[0]) {
+    if (!res.token) {
       setSending(false);
-      setError(friendlyError(error?.message));
-      if (error?.message.includes("SLOT_")) {
+      setError(res.error ?? friendlyError(null));
+      if (res.code?.includes("SLOT_")) {
         setStartsAt(null);
         setResult((prev) => prev && { ...prev, slots: prev.slots.filter((s) => s.starts_at !== startsAt) });
       }
@@ -120,11 +127,11 @@ export function BookingFlow({ business, services, resources, openWeekdays }: Pro
     try {
       localStorage.setItem(SAVED_KEY, JSON.stringify({ name, phone }));
       const mine = JSON.parse(localStorage.getItem("agenda:citas") ?? "[]") as string[];
-      localStorage.setItem("agenda:citas", JSON.stringify([data[0].cancel_token, ...mine].slice(0, 20)));
+      localStorage.setItem("agenda:citas", JSON.stringify([res.token, ...mine].slice(0, 20)));
     } catch {
       // sin almacenamiento
     }
-    router.push(`/cita/${data[0].cancel_token}?nueva=1`);
+    router.push(`/cita/${res.token}?nueva=1`);
   }
 
   return (
@@ -135,7 +142,10 @@ export function BookingFlow({ business, services, resources, openWeekdays }: Pro
             <button
               key={s.id}
               type="button"
-              onClick={() => setServiceId(s.id)}
+              onClick={() => {
+                setServiceId(s.id);
+                setResourceId(null);
+              }}
               aria-pressed={serviceId === s.id}
               className={`flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition ${
                 serviceId === s.id ? "border-brand bg-brand-soft ring-1 ring-brand" : "border-line bg-white hover:border-muted"
@@ -203,9 +213,12 @@ export function BookingFlow({ business, services, resources, openWeekdays }: Pro
             ) : slotError ? (
               <p className="text-red-700">{slotError}</p>
             ) : times.length === 0 ? (
-              <p className="rounded-xl bg-white px-4 py-3 text-muted">
-                No quedan horas libres este día. Prueba con otro.
-              </p>
+              <Waitlist
+                key={slotsKey}
+                onJoin={(n, p) =>
+                  joinWaitlistAction({ businessId: business.id, serviceId: serviceId!, date, name: n, phone: p, resourceId })
+                }
+              />
             ) : (
               <div className="space-y-3">
                 {[
@@ -308,6 +321,47 @@ export function BookingFlow({ business, services, resources, openWeekdays }: Pro
             {sending ? "Reservando…" : "Confirmar reserva"}
           </button>
           <p className="text-center text-xs text-muted">No necesitas crear cuenta.</p>
+        </form>
+      )}
+    </div>
+  );
+}
+
+/** Sin horas libres: el cliente puede anotarse y el dueño le escribe si algo se libera. */
+function Waitlist({ onJoin }: { onJoin: (name: string, phone: string) => Promise<{ ok?: boolean; error?: string }> }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [state, setState] = useState<{ ok?: boolean; error?: string; sending?: boolean }>({});
+
+  if (state.ok)
+    return (
+      <p className="rounded-xl bg-brand-soft px-4 py-3">
+        ✓ Quedaste en la lista de espera. Si se libera una hora, el negocio te escribe por WhatsApp.
+      </p>
+    );
+  return (
+    <div className="rounded-xl bg-white px-4 py-3">
+      <p className="text-muted">No quedan horas libres este día. Prueba con otro o anótate en la lista de espera.</p>
+      {!open ? (
+        <button type="button" className="btn-ghost mt-3 w-full" onClick={() => setOpen(true)}>
+          Avísame si se libera una hora
+        </button>
+      ) : (
+        <form
+          className="mt-3 space-y-2"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setState({ sending: true });
+            setState(await onJoin(name, phone));
+          }}
+        >
+          <input className="input" placeholder="Tu nombre" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} aria-label="Tu nombre" />
+          <input className="input" placeholder="Celular (WhatsApp)" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required aria-label="Celular" />
+          {state.error && <p className="text-sm text-red-700">{state.error}</p>}
+          <button className="btn-primary w-full" disabled={state.sending}>
+            {state.sending ? "Anotando…" : "Anotarme"}
+          </button>
         </form>
       )}
     </div>

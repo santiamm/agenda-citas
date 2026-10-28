@@ -27,13 +27,22 @@ Tomadas de la app funcionando, en tamaño de celular.
 - Elige servicio, con quién (o «cualquiera») y día, y ve solo las horas que de verdad están libres.
 - Deja nombre y celular. Recibe un enlace propio de su cita donde ve si está confirmada y puede cancelarla.
 - El celular recuerda su nombre y teléfono para la próxima reserva.
+- **Agregar a mi calendario** (Google Calendar o iPhone), con recordatorio una hora antes.
+- **Lista de espera:** si el día está lleno, se anota y el negocio le escribe si se libera una hora.
 
 **Para el dueño (con cuenta):**
 - Crea su negocio eligiendo el tipo; la app le deja servicios y horario de ejemplo para ajustar (barbería: corte, corte + barba…; restaurante: mesas de 2, 4, 6…).
-- **Agenda por día:** confirmar, cancelar, marcar «atendida» o «no vino», y escribirle al cliente por WhatsApp con el mensaje ya armado. Un aviso muestra las citas por confirmar de otros días.
-- **Servicios:** crear, editar, ocultar y fijar duración y precio.
+- **Avisos al instante:** notificación en el celular cuando alguien reserva, cancela o se anota en la lista de espera (y correo, si el servidor tiene uno configurado). La agenda abierta se actualiza sola, con sonido.
+- **Agenda por día:** confirmar, cancelar, marcar «atendida» o «no vino», **recordar** la cita por WhatsApp (mensaje ya armado con el enlace para cancelar) y **anotar citas a mano** para quien llama o llega al local.
+- **Clientes e historial:** cada reserva guarda al cliente por su celular. Se ven sus visitas, cuántas veces no vino o canceló, lo que más pide y notas privadas («degradado bajo»).
+- **Mensualidades:** planes con precio mensual, servicios incluidos y cupo de visitas (o ilimitado). Se registran los pagos a mano (efectivo, Nequi, Daviplata…), y la app dice quién está al día, quién está vencido y cuántas visitas lleva; un botón arma el mensaje de cobro por WhatsApp. En la agenda, las citas cubiertas salen marcadas.
+- **Servicios:** crear, editar, ocultar, fijar duración y precio, y elegir **qué barbero hace qué**.
 - **Horario:** varios barberos / estilistas / mesas, cada uno con su horario semanal y dos tramos por día (para el almuerzo).
 - **Bloqueos:** festivos, vacaciones o un rato libre, para todo el negocio o para una persona.
+- **Reportes:** citas por estado, por barbero y por servicio, clientes frecuentes, porcentaje de «no vino», ingresos estimados por servicios y por mensualidades.
+- **Bot de WhatsApp con menú de números** (reservar, ver, cancelar, horarios, mensualidad). Por ahora se prueba en un simulador dentro del panel; está listo para conectarse al WhatsApp oficial de Meta.
+- **Cartel con QR** para imprimir y pegar en el local.
+- **Limpieza:** borrar a mano las citas pasadas o dejar que se borren solas después de 30 días, 3 meses, 6 meses o 1 año.
 - **Ajustes:** nombre, enlace, WhatsApp, dirección, cada cuántos minutos se ofrecen horas, anticipación mínima y hasta cuántos días adelante se puede reservar.
 - Un mismo dueño puede tener varios negocios.
 
@@ -49,14 +58,17 @@ Tomadas de la app funcionando, en tamaño de celular.
 
 ## Lo que todavía no tiene (pendientes)
 
-- **No manda recordatorios ni avisos automáticos** (ni WhatsApp, ni SMS, ni notificaciones push). El dueño se entera de las citas nuevas abriendo la app; el botón de WhatsApp abre el chat, pero el mensaje lo envía él.
-- No hay pagos ni abonos para separar la cita.
-- Todos los barberos hacen todos los servicios (no se puede decir «Andrés no hace tintes»).
+- **El bot todavía no está conectado a un WhatsApp real.** Necesita una cuenta de Meta Business, un número propio y, para mensajes que inicia el negocio, un costo por mensaje. Mientras tanto se usa el simulador.
+- **Los recordatorios al cliente no salen solos:** el dueño toca «Recordar» y WhatsApp abre con el mensaje listo, pero el envío lo hace él.
+- **El correo al dueño** necesita que se configure una cuenta de envío (SMTP) en el servidor; sin eso solo funcionan las notificaciones del celular.
+- En iPhone las notificaciones solo llegan si el dueño instaló la app en la pantalla de inicio (regla de Apple).
+- No hay pagos en línea ni abonos; las mensualidades se registran a mano.
+- El periodo de la mensualidad es de un mes desde el pago (no mes calendario).
 - En restaurantes cada mesa es una sola reserva a la vez; no maneja capacidad por número de personas.
-- El dueño no puede crear una cita a mano desde el panel (para alguien que llama); por ahora la hace desde su propio enlace.
 - Sin conexión solo muestra un aviso: para ver horas y reservar hace falta internet.
 - Está solo en español y para una zona horaria por negocio.
 - El panel del dueño se probó con la demo y con pruebas automáticas, pero todavía no con un negocio real en uso diario.
+- Planes gratis: Supabase pausa el proyecto si pasa una semana sin uso, y el plan gratis de Vercel es para uso no comercial.
 
 ## Cómo instalarla en el celular
 
@@ -97,6 +109,11 @@ cp .env.example .env.local   # en Windows: copy .env.example .env.local
 
 1. En `.env.local` pon la URL y la clave pública (*publishable key*) de tu proyecto de Supabase.
 2. Aplica las migraciones de `supabase/migrations` en orden (con la CLI de Supabase: `supabase db push`, o pegándolas en el editor SQL). La segunda crea el negocio de ejemplo.
+3. Avisos y bot (opcional): pon en `.env.local` un `APP_SECRET` largo y aleatorio, y guarda su huella en la base de datos con
+   `insert into private.app_config values ('app_secret_sha256', encode(sha256('TU_SECRETO'), 'hex'));`.
+   Para las notificaciones genera claves con `npx web-push generate-vapid-keys` (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`).
+   Para el correo, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` y `MAIL_FROM` (sirve Gmail con contraseña de aplicación o Brevo).
+   Para el WhatsApp oficial, `WHATSAPP_TOKEN`, `WHATSAPP_APP_SECRET` y `WHATSAPP_VERIFY_TOKEN`; el webhook es `/api/whatsapp`.
 3. En Supabase → Authentication → URL Configuration, pon `http://localhost:3000` como *Site URL* para que funcionen los correos de confirmación.
 
 ```bash
@@ -117,5 +134,9 @@ Cargan las migraciones reales en un PostgreSQL en memoria (no hace falta Supabas
 - que un servicio largo bloquee las horas que se le cruzan;
 - que con varios barberos «cualquiera» asigne al siguiente libre;
 - que no se ofrezcan horas pasadas, fuera de horario o en días bloqueados;
+- que si un servicio tiene barberos asignados, solo ellos ofrezcan horas;
+- que la mensualidad quede al día un mes al registrar el pago, cuente solo las visitas de los servicios del plan y no se sume dos veces en los ingresos;
+- la lista de espera, la cita manual del dueño, la limpieza de citas viejas y que los avisos solo funcionen con el secreto del servidor;
+- el bot completo: reservar con números, elegir barbero, hora ocupada, ver y cancelar citas y consultar la mensualidad;
 - que un visitante no pueda leer citas ni teléfonos, y que un dueño no vea las citas de otro negocio;
 - que el cliente pueda cancelar con su enlace y la hora quede libre.

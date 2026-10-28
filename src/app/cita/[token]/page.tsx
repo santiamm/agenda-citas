@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { googleCalendarLink } from "@/lib/calendar";
 import { formatDateLong, formatTime, whatsappLink } from "@/lib/format";
 import { STATUS_LABEL, type AppointmentStatus } from "@/lib/types";
 import { CancelBooking } from "./cancel-booking";
@@ -81,6 +82,28 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
 
       <div className="mt-6 space-y-3">
         <ShareBooking />
+        {active && future && (
+          <div className="grid grid-cols-2 gap-2">
+            <a
+              className="btn-ghost text-sm"
+              target="_blank"
+              rel="noreferrer"
+              href={googleCalendarLink({
+                uid: b.appointment_id,
+                title: `${b.service_name} · ${b.business_name}`,
+                start: b.starts_at,
+                end: b.ends_at,
+                location: b.business_address,
+                details: `Con ${b.resource_name}`,
+              })}
+            >
+              📅 Google Calendar
+            </a>
+            <a className="btn-ghost text-sm" href={`/cita/${token}/calendario.ics`}>
+              📅 iPhone / otro
+            </a>
+          </div>
+        )}
         {b.business_phone && (
           <a
             href={whatsappLink(b.business_phone, `Hola, tengo una cita el ${when} (${b.service_name}). Soy ${b.customer_name}.`)}

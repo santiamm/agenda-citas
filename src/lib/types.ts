@@ -25,6 +25,9 @@ export type Business = {
   min_notice_minutes: number;
   max_days_ahead: number;
   is_demo: boolean;
+  retention_days: number | null;
+  notify_email: boolean;
+  notify_push: boolean;
 };
 
 export type Resource = { id: string; business_id: string; name: string; is_active: boolean; sort: number };
@@ -68,6 +71,41 @@ export type AgendaItem = {
   notes: string | null;
   service_name: string;
   resource_name: string;
+  cancel_token?: string;
+  customer_id?: string | null;
+  source?: "web" | "owner" | "bot";
+  member?: boolean; // cubierta por una mensualidad al día
+};
+
+export type WaitlistItem = {
+  id: string;
+  service_id: string;
+  customer_name: string;
+  customer_phone: string;
+  desired_date: string;
+  status: "waiting" | "contacted" | "booked" | "cancelled";
+  notes: string | null;
+  created_at: string;
+  services?: { name: string } | null;
+};
+
+export type MembershipRow = {
+  membership_id: string;
+  customer_id: string;
+  customer_name: string;
+  customer_phone: string;
+  plan_id: string;
+  plan_name: string;
+  price: number;
+  visits_limit: number | null;
+  status: "active" | "paused" | "cancelled";
+  starts_on: string;
+  paid_until: string | null;
+  is_paid: boolean;
+  period_start: string;
+  period_end: string;
+  visits_used: number;
+  notes: string | null;
 };
 
 export const STATUS_LABEL: Record<AppointmentStatus, string> = {
