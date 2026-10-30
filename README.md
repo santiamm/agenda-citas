@@ -28,11 +28,12 @@ Tomadas de la app funcionando, en tamaño de celular.
 - Deja nombre y celular. Recibe un enlace propio de su cita donde ve si está confirmada y puede cancelarla.
 - El celular recuerda su nombre y teléfono para la próxima reserva.
 - **Agregar a mi calendario** (Google Calendar o iPhone), con recordatorio una hora antes.
+- **Recordatorio automático:** desde la página de su cita activa «Recuérdamelo un día antes» y la tarde anterior le llega una notificación al celular.
 - **Lista de espera:** si el día está lleno, se anota y el negocio le escribe si se libera una hora.
 
 **Para el dueño (con cuenta):**
 - Crea su negocio eligiendo el tipo; la app le deja servicios y horario de ejemplo para ajustar (barbería: corte, corte + barba…; restaurante: mesas de 2, 4, 6…).
-- **Avisos al instante:** notificación en el celular cuando alguien reserva, cancela o se anota en la lista de espera (y correo, si el servidor tiene uno configurado). La agenda abierta se actualiza sola, con sonido.
+- **Avisos al instante:** notificación en el celular cuando alguien reserva, cancela o se anota en la lista de espera (y correo, si el servidor tiene uno configurado). La agenda abierta se actualiza sola, con sonido. Cada tarde (6 p. m.) recibe un resumen: «Mañana tienes N citas».
 - **Agenda por día:** confirmar, cancelar, marcar «atendida» o «no vino», **recordar** la cita por WhatsApp (mensaje ya armado con el enlace para cancelar) y **anotar citas a mano** para quien llama o llega al local.
 - **Clientes e historial:** cada reserva guarda al cliente por su celular. Se ven sus visitas, cuántas veces no vino o canceló, lo que más pide y notas privadas («degradado bajo»).
 - **Mensualidades:** planes con precio mensual, servicios incluidos y cupo de visitas (o ilimitado). Se registran los pagos a mano (efectivo, Nequi, Daviplata…), y la app dice quién está al día, quién está vencido y cuántas visitas lleva; un botón arma el mensaje de cobro por WhatsApp. En la agenda, las citas cubiertas salen marcadas.
@@ -59,7 +60,7 @@ Tomadas de la app funcionando, en tamaño de celular.
 ## Lo que todavía no tiene (pendientes)
 
 - **El bot todavía no está conectado a un WhatsApp real.** Necesita una cuenta de Meta Business, un número propio y, para mensajes que inicia el negocio, un costo por mensaje. Mientras tanto se usa el simulador.
-- **Los recordatorios al cliente no salen solos:** el dueño toca «Recordar» y WhatsApp abre con el mensaje listo, pero el envío lo hace él.
+- **Recordatorios por WhatsApp:** el dueño toca «Recordar» y WhatsApp abre con el mensaje listo, pero el envío lo hace él. Los recordatorios automáticos solo llegan como notificación del celular, a los clientes que los activaron.
 - **El correo al dueño** necesita que se configure una cuenta de envío (SMTP) en el servidor; sin eso solo funcionan las notificaciones del celular.
 - En iPhone las notificaciones solo llegan si el dueño instaló la app en la pantalla de inicio (regla de Apple).
 - No hay pagos en línea ni abonos; las mensualidades se registran a mano.

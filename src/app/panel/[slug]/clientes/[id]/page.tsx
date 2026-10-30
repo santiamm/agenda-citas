@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
-import { formatDateLong, formatMoney, formatTime, whatsappLink } from "@/lib/format";
+import { formatDateLong, formatMoney, formatTime, todayIn, whatsappLink } from "@/lib/format";
 import { APPOINTMENT_SELECT, getOwnerBusiness, toAgendaItems, type AppointmentRow } from "@/lib/owner";
 import { STATUS_LABEL, type MembershipRow } from "@/lib/types";
 import { saveCustomerAction } from "../../../more-actions";
@@ -82,7 +82,7 @@ export default async function CustomerPage({ params }: PageProps<"/panel/[slug]/
           <ul className="mt-2 space-y-1 text-sm">
             {upcoming.map((a) => (
               <li key={a.id}>
-                <Link href={`/panel/${slug}?d=${a.starts_at.slice(0, 10)}`} className="underline underline-offset-4">
+                <Link href={`/panel/${slug}?d=${todayIn(tz, new Date(a.starts_at))}`} className="underline underline-offset-4">
                   {formatDateLong(a.starts_at, tz)}, {formatTime(a.starts_at, tz)}
                 </Link>{" "}
                 · {a.service_name} · {STATUS_LABEL[a.status]}

@@ -7,6 +7,7 @@ import { formatDateLong, formatTime, whatsappLink } from "@/lib/format";
 import { STATUS_LABEL, type AppointmentStatus } from "@/lib/types";
 import { CancelBooking } from "./cancel-booking";
 import { ShareBooking } from "./share-booking";
+import { RemindMe } from "./remind-me";
 
 export const metadata: Metadata = { title: "Tu cita", robots: { index: false } };
 
@@ -104,6 +105,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
             </a>
           </div>
         )}
+        {active && future && <RemindMe token={token} />}
         {b.business_phone && (
           <a
             href={whatsappLink(b.business_phone, `Hola, tengo una cita el ${when} (${b.service_name}). Soy ${b.customer_name}.`)}

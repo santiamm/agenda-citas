@@ -2,55 +2,27 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { pushSupport, subscribePush } from "@/lib/push-client";
 
 const noop = () => () => {};
-
-function keyToBytes(base64: string) {
-  const pad = "=".repeat((4 - (base64.length % 4)) % 4);
-  const raw = atob((base64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
-}
 
 /** Activa las notificaciones de citas nuevas en este celular. */
 export function PushToggle() {
   const supabase = useMemo(() => createClient(), []);
-  const support = useSyncExternalStore(
-    noop,
-    () => {
-      if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
-        // En iPhone solo funciona con la app instalada en la pantalla de inicio.
-        return /iPhone|iPad/.test(navigator.userAgent) ? "ios-browser" : "no";
-      }
-      return Notification.permission === "granted" ? "granted" : Notification.permission === "denied" ? "denied" : "ask";
-    },
-    () => "loading",
-  );
+  const support = useSyncExternalStore(noop, pushSupport, () => "loading");
   const [status, setStatus] = useState<string | null>(null);
 
   async function enable() {
     setStatus("Activando…");
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") return setStatus("No diste permiso. Puedes activarlo en los ajustes del navegador.");
-      const reg = (await navigator.serviceWorker.getRegistration()) ?? (await navigator.serviceWorker.register("/sw.js"));
-      await navigator.serviceWorker.ready;
-      const sub =
-        (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: keyToBytes(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
-        }));
-      const json = sub.toJSON();
-      const { error } = await supabase.rpc("save_push_subscription", {
-        p_endpoint: json.endpoint,
-        p_p256dh: json.keys?.p256dh,
-        p_auth: json.keys?.auth,
-        p_user_agent: navigator.userAgent,
-      });
-      setStatus(error ? "No se pudo guardar. Intenta de nuevo." : "✓ Listo: este celular recibirá avisos de citas nuevas.");
-    } catch {
-      setStatus("Este navegador no permitió las notificaciones.");
-    }
+    const sub = await subscribePush();
+    if ("error" in sub) return setStatus(sub.error);
+    const { error } = await supabase.rpc("save_push_subscription", {
+      p_endpoint: sub.endpoint,
+      p_p256dh: sub.p256dh,
+      p_auth: sub.auth,
+      p_user_agent: navigator.userAgent,
+    });
+    setStatus(error ? "No se pudo guardar. Intenta de nuevo." : "✓ Listo: este celular recibirá avisos de citas nuevas y el resumen de cada tarde.");
   }
 
   if (support === "loading") return null;

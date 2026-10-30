@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
 import { getUser } from "@/lib/supabase/server";
+import { todayIn } from "@/lib/format";
 import type { AgendaItem, Business, MembershipRow } from "@/lib/types";
 
 /** Negocio del usuario logueado por slug. Si no es suyo, 404 (no revelamos que existe). */
@@ -31,9 +32,10 @@ export function toAgendaItems(
   rows: AppointmentRow[],
   memberships: MembershipRow[] = [],
   planServices: { plan_id: string; service_id: string }[] = [],
+  tz = "America/Bogota",
 ): AgendaItem[] {
   return rows.map((r) => {
-    const day = r.starts_at.slice(0, 10);
+    const day = todayIn(tz, new Date(r.starts_at)); // fecha local del negocio, no UTC
     const member = memberships.some((m) => {
       if (m.customer_id !== r.customer_id || m.status === "cancelled" || !m.paid_until || m.paid_until < day) return false;
       const covered = planServices.filter((ps) => ps.plan_id === m.plan_id);

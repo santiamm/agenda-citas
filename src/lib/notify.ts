@@ -67,6 +67,31 @@ function setupVapid() {
   return true;
 }
 
+type PushSub = { endpoint: string; p256dh: string; auth: string };
+
+/** Envía una notificación a varios celulares. Llama a onGone con los que ya no existen. */
+export async function sendPush(
+  subs: PushSub[],
+  msg: { title: string; body: string; url: string },
+  onGone: (endpoint: string) => PromiseLike<unknown>,
+): Promise<number> {
+  if (!subs.length || !setupVapid()) return 0;
+  const results = await Promise.allSettled(
+    subs.map((s) =>
+      webpush
+        .sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify(msg), {
+          TTL: 60 * 60 * 12,
+          urgency: "high",
+        })
+        .catch(async (err: { statusCode?: number }) => {
+          if (err.statusCode === 404 || err.statusCode === 410) await onGone(s.endpoint);
+          throw err;
+        }),
+    ),
+  );
+  return results.filter((r) => r.status === "fulfilled").length;
+}
+
 function mailer() {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null;

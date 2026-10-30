@@ -89,7 +89,7 @@ export default async function AgendaPage({ params, searchParams }: PageProps<"/p
       )}
 
       <AgendaView
-        items={toAgendaItems(day.data ?? [], members, ps)}
+        items={toAgendaItems(day.data ?? [], members, ps, tz)}
         date={date}
         tz={tz}
         basePath={`/panel/${slug}`}
