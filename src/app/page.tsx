@@ -45,6 +45,10 @@ export default function Home() {
               ¿Quieres ver el lado del dueño?{" "}
               <Link href="/demo" className="font-medium text-brand underline underline-offset-4">
                 Mira el panel de ejemplo
+              </Link>{" "}
+              o reserva una mesa en el{" "}
+              <Link href="/b/restaurante-demo" className="font-medium text-brand underline underline-offset-4">
+                restaurante de ejemplo
               </Link>
               .
             </p>

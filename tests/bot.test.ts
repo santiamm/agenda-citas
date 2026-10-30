@@ -18,6 +18,7 @@ function deps(over: Partial<BotDeps> = {}): BotDeps & { booked: unknown[] } {
       address: "Calle 1",
       resource_label: "Barbero",
       max_days_ahead: 30,
+      category: "barberia",
     },
     appUrl: "https://app.test",
     services: [
@@ -115,5 +116,12 @@ describe("bot de menú", () => {
     const { last } = await talk(d, ["hola", "5"]);
     expect(last[0]).toContain("Plan 4 cortes");
     expect(last[0]).toContain("1 de 4");
+  });
+
+  it("en restaurantes no pregunta la mesa", async () => {
+    const d = deps();
+    d.business.category = "restaurante";
+    const { state } = await talk(d, ["hola", "1", "1"]);
+    expect(state.step).toBe("day");
   });
 });

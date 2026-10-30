@@ -14,6 +14,13 @@ export type ActionState = { error?: string; ok?: string } | undefined;
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const num = (f: FormData, k: string) => Number(f.get(k) ?? 0);
 
+/** Capacidad (personas) de una mesa; solo viene en negocios tipo restaurante. */
+function capacity(form: FormData) {
+  if (!form.has("capacity")) return {};
+  const n = num(form, "capacity");
+  return { capacity: n > 0 ? n : null };
+}
+
 function done(slug: string, page = "", ok = "Guardado"): ActionState {
   revalidatePath(`/panel/${slug}${page}`);
   return { ok };
@@ -91,6 +98,7 @@ export async function saveServiceAction(_prev: ActionState, form: FormData): Pro
     duration_minutes: num(form, "duration_minutes"),
     price: num(form, "price"),
     is_active: form.get("is_active") === "on",
+    ...(form.has("min_party") ? { min_party: num(form, "min_party") > 0 ? num(form, "min_party") : null } : {}),
   };
   if (row.name.length < 2) return { error: "Escribe el nombre del servicio." };
   if (!(row.duration_minutes >= 5 && row.duration_minutes <= 480)) return { error: "La duración va de 5 a 480 minutos." };
@@ -122,7 +130,7 @@ export async function saveResourceAction(_prev: ActionState, form: FormData): Pr
   if (id) {
     const { error } = await supabase
       .from("resources")
-      .update({ name, is_active: form.get("is_active") === "on" })
+      .update({ name, is_active: form.get("is_active") === "on", ...capacity(form) })
       .eq("id", id);
     if (error) return { error: friendlyError(error.message) };
     return done(slug, "/horario");
@@ -130,7 +138,7 @@ export async function saveResourceAction(_prev: ActionState, form: FormData): Pr
   const businessId = str(form, "business_id");
   const { data, error } = await supabase
     .from("resources")
-    .insert({ business_id: businessId, name, sort: 100 })
+    .insert({ business_id: businessId, name, sort: 100, ...capacity(form) })
     .select("id")
     .single();
   if (error) return { error: friendlyError(error.message) };

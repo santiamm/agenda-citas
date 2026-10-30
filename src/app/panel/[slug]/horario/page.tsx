@@ -25,6 +25,7 @@ export default async function SchedulePage({ params }: PageProps<"/panel/[slug]/
   const timeOff = (off.data ?? []) as TimeOff[];
   const label = business.resource_label;
   const tz = business.timezone;
+  const isRestaurant = business.category === "restaurante";
 
   return (
     <div className="space-y-8">
@@ -37,7 +38,7 @@ export default async function SchedulePage({ params }: PageProps<"/panel/[slug]/
         </div>
         {resources.map((r) => (
           <div key={r.id} className={`card p-4 ${r.is_active ? "" : "opacity-60"}`}>
-            <ResourceForm slug={slug} businessId={business.id} resource={r} />
+            <ResourceForm slug={slug} businessId={business.id} resource={r} isRestaurant={isRestaurant} />
             <details className="mt-3">
               <summary className="cursor-pointer text-sm font-medium text-brand">Horario semanal de {r.name}</summary>
               <div className="mt-3">
@@ -57,7 +58,7 @@ export default async function SchedulePage({ params }: PageProps<"/panel/[slug]/
         ))}
         <div className="card p-4">
           <h2 className="mb-3 font-semibold">Agregar {label.toLowerCase()}</h2>
-          <ResourceForm slug={slug} businessId={business.id} copyFrom={resources[0]?.id} />
+          <ResourceForm slug={slug} businessId={business.id} copyFrom={resources[0]?.id} isRestaurant={isRestaurant} />
         </div>
       </section>
 

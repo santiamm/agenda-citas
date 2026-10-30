@@ -11,11 +11,13 @@ export function ResourceForm({
   businessId,
   resource,
   copyFrom,
+  isRestaurant,
 }: {
   slug: string;
   businessId: string;
   resource?: Resource;
   copyFrom?: string;
+  isRestaurant?: boolean;
 }) {
   const [state, action, pending] = useActionState(saveResourceAction, undefined);
   return (
@@ -34,6 +36,20 @@ export function ResourceForm({
           required
           maxLength={60}
         />
+        {isRestaurant && (
+          <input
+            name="capacity"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={100}
+            aria-label="Capacidad (personas)"
+            title="Capacidad (personas)"
+            placeholder="Pers."
+            defaultValue={resource?.capacity ?? ""}
+            className="input w-24 shrink-0"
+          />
+        )}
         <button className={resource ? "btn-ghost shrink-0" : "btn-primary shrink-0"} disabled={pending}>
           {resource ? "Guardar" : "Agregar"}
         </button>

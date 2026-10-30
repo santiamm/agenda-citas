@@ -79,6 +79,7 @@ export default async function BusinessPage({ params }: PageProps<"/b/[slug]">) {
             timezone: business.timezone,
             currency: business.currency,
             resource_label: business.resource_label,
+            category: business.category,
             max_days_ahead: business.max_days_ahead,
           }}
           services={services}

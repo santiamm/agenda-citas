@@ -17,7 +17,7 @@ import {
 import type { Resource, Service } from "@/lib/types";
 
 type Props = {
-  business: { id: string; timezone: string; currency: string; resource_label: string; max_days_ahead: number };
+  business: { id: string; timezone: string; currency: string; resource_label: string; max_days_ahead: number; category: string };
   services: Service[];
   resources: Resource[];
   resourceServices: { resource_id: string; service_id: string }[];
@@ -40,6 +40,8 @@ export function BookingFlow({ business, services, resources: allResources, resou
     const assigned = resourceServices.filter((rs) => rs.service_id === serviceId).map((rs) => rs.resource_id);
     return assigned.length ? allResources.filter((r) => assigned.includes(r.id)) : allResources;
   }, [allResources, resourceServices, serviceId]);
+  // En restaurantes el cliente no elige mesa: la app asigna la más pequeña donde cabe el grupo.
+  const chooseResource = business.category !== "restaurante" && resources.length > 1;
   const days = useMemo(() => {
     const today = todayIn(tz);
     return Array.from({ length: Math.min(business.max_days_ahead, 21) + 1 }, (_, i) => addDays(today, i));
@@ -164,7 +166,7 @@ export function BookingFlow({ business, services, resources: allResources, resou
         </div>
       </Step>
 
-      {serviceId && resources.length > 1 && (
+      {serviceId && chooseResource && (
         <Step n={2} title={`¿Con quién? (${business.resource_label.toLowerCase()})`}>
           <div className="flex flex-wrap gap-2">
             <Chip active={resourceId === null} onClick={() => setResourceId(null)}>
@@ -180,7 +182,7 @@ export function BookingFlow({ business, services, resources: allResources, resou
       )}
 
       {serviceId && (
-        <Step n={resources.length > 1 ? 3 : 2} title="¿Qué día?">
+        <Step n={chooseResource ? 3 : 2} title="¿Qué día?">
           <div className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1">
             {days.map((d) => {
               const closed = !openWeekdays.includes(weekdayOf(d));

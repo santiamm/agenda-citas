@@ -30,7 +30,7 @@ export type Business = {
   notify_push: boolean;
 };
 
-export type Resource = { id: string; business_id: string; name: string; is_active: boolean; sort: number };
+export type Resource = { id: string; business_id: string; name: string; is_active: boolean; sort: number; capacity: number | null };
 
 export type Service = {
   id: string;
@@ -41,6 +41,7 @@ export type Service = {
   price: number;
   is_active: boolean;
   sort: number;
+  min_party: number | null;
 };
 
 export type WorkingHour = {

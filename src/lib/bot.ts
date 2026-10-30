@@ -23,6 +23,7 @@ export type BotBusiness = {
   address: string | null;
   resource_label: string;
   max_days_ahead: number;
+  category?: string;
 };
 
 export type BotDeps = {
@@ -129,7 +130,8 @@ export async function handleMessage(state: BotState | null, text: string, d: Bot
       const id = pick(state);
       if (!id) return { state, replies: ["Responde con el número del servicio." + footer] };
       const doers = whoDoes(d, id);
-      if (doers.length > 1) {
+      // En restaurantes no se elige mesa: se asigna la que corresponde al tamaño del grupo.
+      if (doers.length > 1 && d.business.category !== "restaurante") {
         return {
           state: { step: "resource", serviceId: id, options: ["any", ...doers.map((r) => r.id)] },
           replies: [`¿Con quién? (${d.business.resource_label.toLowerCase()})\n\n` + numbered(["Cualquiera", ...doers.map((r) => r.name)]) + footer],

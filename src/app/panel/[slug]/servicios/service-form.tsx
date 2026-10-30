@@ -5,7 +5,17 @@ import { FormStatus } from "@/components/form-status";
 import type { Service } from "@/lib/types";
 import { saveServiceAction } from "../../actions";
 
-export function ServiceForm({ slug, businessId, service }: { slug: string; businessId: string; service?: Service }) {
+export function ServiceForm({
+  slug,
+  businessId,
+  service,
+  isRestaurant,
+}: {
+  slug: string;
+  businessId: string;
+  service?: Service;
+  isRestaurant?: boolean;
+}) {
   const [state, action, pending] = useActionState(saveServiceAction, undefined);
   const id = service?.id ?? "nuevo";
   return (
@@ -59,6 +69,24 @@ export function ServiceForm({ slug, businessId, service }: { slug: string; busin
           />
         </div>
       </div>
+      {isRestaurant && (
+        <div>
+          <label className="label" htmlFor={`party-${id}`}>
+            Personas mínimas en la mesa
+          </label>
+          <input
+            id={`party-${id}`}
+            name="min_party"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={100}
+            className="input"
+            defaultValue={service?.min_party ?? 0}
+          />
+          <p className="mt-1 text-xs text-muted">Solo se ofrecen mesas con al menos esa capacidad. 0 = cualquier mesa.</p>
+        </div>
+      )}
       <label className="flex items-center gap-2">
         <input type="checkbox" name="is_active" defaultChecked={service?.is_active ?? true} className="h-5 w-5 accent-brand" />
         Visible para reservar

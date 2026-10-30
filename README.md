@@ -39,6 +39,7 @@ Tomadas de la app funcionando, en tamaño de celular.
 - **Mensualidades:** planes con precio mensual, servicios incluidos y cupo de visitas (o ilimitado). Se registran los pagos a mano (efectivo, Nequi, Daviplata…), y la app dice quién está al día, quién está vencido y cuántas visitas lleva; un botón arma el mensaje de cobro por WhatsApp. En la agenda, las citas cubiertas salen marcadas.
 - **Servicios:** crear, editar, ocultar, fijar duración y precio, y elegir **qué barbero hace qué**.
 - **Horario:** varios barberos / estilistas / mesas, cada uno con su horario semanal y dos tramos por día (para el almuerzo).
+- **Restaurantes:** cada mesa tiene su capacidad y cada tipo de reserva un mínimo de personas («Mesa para 3 o 4»). El cliente no elige mesa: la app le da la más pequeña libre donde cabe el grupo, para no gastar la de 6 en una pareja. Hay un [restaurante de ejemplo](https://agenda-citas-eight.vercel.app/b/restaurante-demo).
 - **Bloqueos:** festivos, vacaciones o un rato libre, para todo el negocio o para una persona.
 - **Reportes:** citas por estado, por barbero y por servicio, clientes frecuentes, porcentaje de «no vino», ingresos estimados por servicios y por mensualidades.
 - **Bot de WhatsApp con menú de números** (reservar, ver, cancelar, horarios, mensualidad). Por ahora se prueba en un simulador dentro del panel; está listo para conectarse al WhatsApp oficial de Meta.
@@ -65,7 +66,7 @@ Tomadas de la app funcionando, en tamaño de celular.
 - En iPhone las notificaciones solo llegan si el dueño instaló la app en la pantalla de inicio (regla de Apple).
 - No hay pagos en línea ni abonos; las mensualidades se registran a mano.
 - El periodo de la mensualidad es de un mes desde el pago (no mes calendario).
-- En restaurantes cada mesa es una sola reserva a la vez; no maneja capacidad por número de personas.
+- En restaurantes cada mesa es una reserva a la vez (no se juntan mesas para grupos grandes).
 - Sin conexión solo muestra un aviso: para ver horas y reservar hace falta internet.
 - Está solo en español y para una zona horaria por negocio.
 - El panel del dueño se probó con la demo y con pruebas automáticas, pero todavía no con un negocio real en uso diario.
@@ -134,6 +135,7 @@ Cargan las migraciones reales en un PostgreSQL en memoria (no hace falta Supabas
 - que dos citas no se puedan cruzar, ni por la app ni insertando directo en la tabla;
 - que un servicio largo bloquee las horas que se le cruzan;
 - que con varios barberos «cualquiera» asigne al siguiente libre;
+- que en restaurantes un grupo solo vea mesas donde cabe y reciba la más pequeña disponible;
 - que no se ofrezcan horas pasadas, fuera de horario o en días bloqueados;
 - que si un servicio tiene barberos asignados, solo ellos ofrezcan horas;
 - que la mensualidad quede al día un mes al registrar el pago, cuente solo las visitas de los servicios del plan y no se sume dos veces en los ingresos;

@@ -52,7 +52,7 @@ export default async function ServicesPage({ params }: PageProps<"/panel/[slug]/
                 <span className="text-sm text-brand group-open:hidden">Editar</span>
               </summary>
               <div className="border-t border-line p-4">
-                <ServiceForm slug={slug} businessId={business.id} service={s} />
+                <ServiceForm slug={slug} businessId={business.id} service={s} isRestaurant={business.category === "restaurante"} />
                 {resources.length > 1 && (
                   <div className="mt-4 rounded-xl border border-line p-3">
                     <p className="font-medium">¿Quién lo hace?</p>
@@ -94,7 +94,7 @@ export default async function ServicesPage({ params }: PageProps<"/panel/[slug]/
 
       <section className="card p-4">
         <h2 className="mb-3 font-semibold">Nuevo servicio</h2>
-        <ServiceForm slug={slug} businessId={business.id} />
+        <ServiceForm slug={slug} businessId={business.id} isRestaurant={business.category === "restaurante"} />
       </section>
     </div>
   );
